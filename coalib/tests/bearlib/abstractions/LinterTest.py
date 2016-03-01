@@ -69,7 +69,7 @@ class LinterComponentTest(unittest.TestCase):
         # The test program puts out the stdin content (only the first line) to
         # stdout and the arguments passed to stderr.
         stdout, stderr = uut._execute_command(["some_argument"],
-                                              "display content")
+                                              stdin="display content")
 
         self.assertEqual(stdout, "display content")
         self.assertEqual(stderr, "['some_argument'']")
@@ -107,7 +107,7 @@ class LinterComponentTest(unittest.TestCase):
                          ["contents"])
 
     def test_generate_config(self):
-        uut = Linter("")(self.EmptyTestLinter)
+        uut = Linter("", output_regex="")(self.EmptyTestLinter)
         with uut._create_config("filename", []) as config_file:
             self.assertIsNone(config_file)
 
