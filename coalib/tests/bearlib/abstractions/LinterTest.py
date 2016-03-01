@@ -88,17 +88,19 @@ class LinterComponentTest(unittest.TestCase):
         # TODO is able to take.
 
     def test_grab_output(self):
-        uut = Linter("", use_stderr=False)(self.EmptyTestLinter)
+        uut = (Linter("", use_stderr=False, output_regex="")
+               (self.EmptyTestLinter))
         self.assertEqual(uut._grab_output("std", "err"), "std")
 
-        uut = Linter("", use_stderr=True)(self.EmptyTestLinter)
+        uut = (Linter("", use_stderr=True, output_regex="")
+               (self.EmptyTestLinter))
         self.assertEqual(uut._grab_output("std", "err"), "err")
 
     def test_pass_file_as_stdin_if_needed(self):
-        uut = Linter("", stdin=False)(self.EmptyTestLinter)
+        uut = Linter("", stdin=False, output_regex="")(self.EmptyTestLinter)
         self.assertIsNone(uut._pass_file_as_stdin_if_needed(["contents"]))
 
-        uut = Linter("", stdin=True)(self.EmptyTestLinter)
+        uut = Linter("", stdin=True, output_regex="")(self.EmptyTestLinter)
         self.assertEqual(uut._pass_file_as_stdin_if_needed(["contents"]),
                          ["contents"])
 
@@ -326,4 +328,5 @@ class LinterReallifeTest(unittest.TestCase):
         self.assertEqual(results, expected)
 
     def test_stdin_stderr_config_correction(self):
+        # TODO
         pass

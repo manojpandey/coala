@@ -327,9 +327,9 @@ def Linter(executable: str,
                 def _pass_file_as_stdin_if_needed(file):
                     return None
 
-            @staticmethod
+            @classmethod
             @contextmanager
-            def _create_config(filename, file, **kwargs):
+            def _create_config(cls, filename, file, **kwargs):
                 """
                 Provides a context-manager that creates the config file if the
                 user provides one and cleans it up when done with linting.
