@@ -1,5 +1,6 @@
-# This little program tests whether each line only continues a single char and
-# is one of the primitive math operations ``+``, ``-``, ``*`` and ``/``.
+# This little program tests whether each line begins with one of the primitive
+# math operations ``+``, ``-``, ``*`` and ``/``.
+#
 # When user specifies to actually fix the file, this program removes invalid
 # lines.
 #
