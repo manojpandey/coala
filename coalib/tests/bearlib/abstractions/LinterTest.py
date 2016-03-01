@@ -53,8 +53,7 @@ class LinterComponentTest(unittest.TestCase):
         self.assertEqual(uut.get_executable(), "some-executable")
 
     def test_check_prerequisites(self):
-        test_program_path = get_testfile_name("stdout_stderr.py")
-        uut = Linter(test_program_path, output_regex="")(self.EmptyTestLinter)
+        uut = Linter(sys.executable, output_regex="")(self.EmptyTestLinter)
         self.assertTrue(uut.check_prerequisites())
 
         uut = (Linter("invalid_nonexisting_programv412", output_regex="")
@@ -64,12 +63,13 @@ class LinterComponentTest(unittest.TestCase):
 
     def test_execute_command(self):
         test_program_path = get_testfile_name("stdout_stderr.py")
-        uut = Linter(test_program_path, output_regex="")(self.EmptyTestLinter)
+        uut = Linter(sys.executable, output_regex="")(self.EmptyTestLinter)
 
         # The test program puts out the stdin content (only the first line) to
         # stdout and the arguments passed to stderr.
-        stdout, stderr = uut._execute_command(["some_argument"],
-                                              stdin="display content")
+        stdout, stderr = uut._execute_command(
+            [test_program_path, "some_argument"],
+            stdin="display content")
 
         self.assertEqual(stdout, "display content")
         self.assertEqual(stderr, "['some_argument'']")
@@ -116,7 +116,7 @@ class LinterComponentTest(unittest.TestCase):
             def generate_config(filename, file, val):
                 return "config_value = " + str(val)
 
-        uut = Linter("")(ConfigurationTestLinter)
+        uut = Linter("", output_regex="")(ConfigurationTestLinter)
         with uut._create_config("filename", [], val=88) as config_file:
             self.assertTrue(os.path.isfile(config_file))
             with open(config_file, mode="r") as fl:
