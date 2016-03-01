@@ -71,8 +71,8 @@ class LinterComponentTest(unittest.TestCase):
             [test_program_path, "some_argument"],
             stdin="display content")
 
-        self.assertEqual(stdout, "display content")
-        self.assertEqual(stderr, "['some_argument'']")
+        self.assertEqual(stdout, "display content\n")
+        self.assertEqual(stderr, "['some_argument'']\n")
 
     def test_process_output_corrected(self):
         # TODO Ahhh I need to instantiate the bear...
