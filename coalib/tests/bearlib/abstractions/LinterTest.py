@@ -49,21 +49,22 @@ class LinterComponentTest(unittest.TestCase):
                    severity_map={})
 
     def test_get_executable(self):
-        uut = Linter("some-executable")(self.EmptyTestLinter)
+        uut = Linter("some-executable", output_regex="")(self.EmptyTestLinter)
         self.assertEqual(uut.get_executable(), "some-executable")
 
     def test_check_prerequisites(self):
         test_program_path = get_testfile_name("stdout_stderr.py")
-        uut = Linter(test_program_path)(self.EmptyTestLinter)
+        uut = Linter(test_program_path, output_regex="")(self.EmptyTestLinter)
         self.assertTrue(uut.check_prerequisites())
 
-        uut = Linter("invalid_nonexisting_programv412")(self.EmptyTestLinter)
+        uut = (Linter("invalid_nonexisting_programv412", output_regex="")
+               (self.EmptyTestLinter))
         self.assertEqual(uut.check_prerequisites(),
                          "'invalid_nonexisting_programv412' is not installed.")
 
     def test_execute_command(self):
         test_program_path = get_testfile_name("stdout_stderr.py")
-        uut = Linter(test_program_path)(self.EmptyTestLinter)
+        uut = Linter(test_program_path, output_regex="")(self.EmptyTestLinter)
 
         # The test program puts out the stdin content (only the first line) to
         # stdout and the arguments passed to stderr.
@@ -97,10 +98,11 @@ class LinterComponentTest(unittest.TestCase):
         self.assertEqual(uut._grab_output("std", "err"), "err")
 
     def test_pass_file_as_stdin_if_needed(self):
-        uut = Linter("", stdin=False, output_regex="")(self.EmptyTestLinter)
+        uut = (Linter("", use_stdin=False, output_regex="")
+               (self.EmptyTestLinter))
         self.assertIsNone(uut._pass_file_as_stdin_if_needed(["contents"]))
 
-        uut = Linter("", stdin=True, output_regex="")(self.EmptyTestLinter)
+        uut = Linter("", use_stdin=True, output_regex="")(self.EmptyTestLinter)
         self.assertEqual(uut._pass_file_as_stdin_if_needed(["contents"]),
                          ["contents"])
 
@@ -295,7 +297,10 @@ class LinterReallifeTest(unittest.TestCase):
 
                 return self.test_program_path, "--config", config_file
 
-        uut = (Linter(sys.executable, use_stdin=True, use_stderr=True)
+        uut = (Linter(sys.executable,
+                      use_stdin=True,
+                      use_stderr=True,
+                      output_regex=self.test_program_regex)
                (Handler)
                (self.section, None))
 
