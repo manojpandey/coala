@@ -1,170 +1,32 @@
 import os
-import platform
+import sys
 import unittest
 
 from coalib.bearlib.abstractions.Linter import Linter
-from coalib.misc.ContextManagers import prepare_file
-from coalib.misc.Shell import escape_path_argument
+from coalib.results.Result import Result
 from coalib.results.RESULT_SEVERITY import RESULT_SEVERITY
-from coalib.results.SourceRange import SourceRange
 from coalib.settings.Section import Section
 
 
-class LintTest(unittest.TestCase):
+def get_testfile_name(name):
+    """
+    Gets the full path to a testfile inside ``linter_test_files`` directory.
 
-    def setUp(self):
-        section = Section("some_name")
-        self.uut = Lint(section, None)
-
-    def test_invalid_output(self):
-        out = list(self.uut.process_output(
-            ["1.0|0: Info message\n",
-             "2.2|1: Normal message\n",
-             "3.4|2: Major message\n"],
-            "a/file.py",
-            ['original_file_lines_placeholder']))
-        self.assertEqual(len(out), 3)
-        self.assertEqual(out[0].origin, "Lint")
-
-        self.assertEqual(out[0].affected_code[0],
-                         SourceRange.from_values("a/file.py", 1, 0))
-        self.assertEqual(out[0].severity, RESULT_SEVERITY.INFO)
-        self.assertEqual(out[0].message, "Info message")
-
-        self.assertEqual(out[1].affected_code[0],
-                         SourceRange.from_values("a/file.py", 2, 2))
-        self.assertEqual(out[1].severity, RESULT_SEVERITY.NORMAL)
-        self.assertEqual(out[1].message, "Normal message")
-
-        self.assertEqual(out[2].affected_code[0],
-                         SourceRange.from_values("a/file.py", 3, 4))
-        self.assertEqual(out[2].severity, RESULT_SEVERITY.MAJOR)
-        self.assertEqual(out[2].message, "Major message")
-
-    def test_custom_regex(self):
-        self.uut.output_regex = (r'(?P<origin>\w+)\|'
-                                 r'(?P<line>\d+)\.(?P<column>\d+)\|'
-                                 r'(?P<end_line>\d+)\.(?P<end_column>\d+)\|'
-                                 r'(?P<severity>\w+): (?P<message>.*)')
-        self.uut.severity_map = {"I": RESULT_SEVERITY.INFO}
-        out = list(self.uut.process_output(
-            ["info_msg|1.0|2.3|I: Info message\n"],
-            'a/file.py',
-            ['original_file_lines_placeholder']))
-        self.assertEqual(len(out), 1)
-        self.assertEqual(out[0].affected_code[0].start.line, 1)
-        self.assertEqual(out[0].affected_code[0].start.column, 0)
-        self.assertEqual(out[0].affected_code[0].end.line, 2)
-        self.assertEqual(out[0].affected_code[0].end.column, 3)
-        self.assertEqual(out[0].severity, RESULT_SEVERITY.INFO)
-        self.assertEqual(out[0].origin, 'Lint (info_msg)')
-
-    def test_valid_output(self):
-        out = list(self.uut.process_output(
-            ["Random line that shouldn't be captured\n",
-             "*************\n"],
-            'a/file.py',
-            ['original_file_lines_placeholder']))
-        self.assertEqual(len(out), 0)
-
-    def test_stdin_input(self):
-        with prepare_file(["abcd", "efgh"], None) as (lines, filename):
-            # Use more which is a command that can take stdin and show it.
-            # This is available in windows and unix.
-            if platform.system() == "Windows":
-                # Windows maps `more.com` to `more` only in shell, but `Lint`
-                # doesn't use it.
-                self.uut.executable = "more.com"
-            else:
-                self.uut.executable = "more"
-            self.uut.use_stdin = True
-            self.uut.use_stderr = False
-            self.uut.process_output = lambda output, filename, file: output
-
-            out = self.uut.lint(file=lines)
-            # Some implementations of `more` add an extra newline at the end.
-            self.assertTrue(("abcd\n", "efgh\n") == out or
-                            ("abcd\n", "efgh\n", "\n") == out)
-
-    def test_stderr_output(self):
-        self.uut.executable = "echo"
-        self.uut.arguments = "hello"
-        self.uut.use_stdin = False
-        self.uut.use_stderr = True
-        self.uut.process_output = lambda output, filename, file: output
-        out = self.uut.lint("unused_filename")
-        self.assertEqual((), out)  # stderr is used
-
-        self.uut.use_stderr = False
-        out = self.uut.lint("unused_filename")
-        self.assertEqual(('hello\n',), out)  # stdout is used
-
-        def assert_warn(line):
-            assert line == "hello"
-        old_warn = self.uut.warn
-        self.uut.warn = assert_warn
-        self.uut._print_errors(["hello", "\n"])
-        self.uut.warn = old_warn
-
-    def test_gives_corrected(self):
-        self.uut.gives_corrected = True
-        out = tuple(self.uut.process_output(["a", "b"], "filename", ["a", "b"]))
-        self.assertEqual((), out)
-        out = tuple(self.uut.process_output(["a", "b"], "filename", ["a"]))
-        self.assertEqual(len(out), 1)
-
-    def test_missing_binary(self):
-        old_binary = Lint.executable
-        invalid_binary = "invalid_binary_which_doesnt_exist"
-        Lint.executable = invalid_binary
-
-        self.assertEqual(Lint.check_prerequisites(),
-                         "'{}' is not installed.".format(invalid_binary))
-
-        # "echo" is existent on nearly all platforms.
-        Lint.executable = "echo"
-        self.assertTrue(Lint.check_prerequisites())
-
-        del Lint.executable
-        self.assertTrue(Lint.check_prerequisites())
-
-        Lint.executable = old_binary
-
-    def test_config_file_generator(self):
-        self.uut.executable = "echo"
-        self.uut.arguments = "-c {config_file}"
-
-        self.assertEqual(
-            self.uut._create_command(config_file="configfile").strip(),
-            "echo -c " + escape_path_argument("configfile"))
-
-    def test_config_file_generator(self):
-        self.uut.executable = "echo"
-        self.uut.config_file = lambda: ["config line1"]
-        config_filename = self.uut.generate_config_file()
-        self.assertTrue(os.path.isfile(config_filename))
-        os.remove(config_filename)
-
-        # To complete coverage of closing the config file and check if any
-        # errors are thrown there.
-        self.uut.lint("filename")
+    :param name: The filename of the testfile to get the full path for.
+    :return:     The full path to given testfile name.
+    """
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                        "linter_test_files",
+                         name)
 
 
-class LinterTest(unittest.TestCase):
+class LinterComponentTest(unittest.TestCase):
 
     class EmptyTestLinter:
         pass
 
-    class ConfigurationTestLinter:
-        @staticmethod
-        def generate_config(filename, file, val):
-            return "config_value = " + str(val)
-
-    @staticmethod
-    def get_full_testfile_name(name):
-        return os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                            "linter_test_files",
-                            name)
+    def setUp(self):
+        self.section = Section("TEST_SECTION")
 
     def test_decorator_creation(self):
         with self.assertRaises(ValueError):
@@ -191,7 +53,7 @@ class LinterTest(unittest.TestCase):
         self.assertEqual(uut.get_executable(), "some-executable")
 
     def test_check_prerequisites(self):
-        test_program_path = self.get_full_testfile_name("stdout_stderr.py")
+        test_program_path = get_testfile_name("stdout_stderr.py")
         uut = Linter(test_program_path)(self.EmptyTestLinter)
         self.assertTrue(uut.check_prerequisites())
 
@@ -200,7 +62,7 @@ class LinterTest(unittest.TestCase):
                          "'invalid_nonexisting_programv412' is not installed.")
 
     def test_execute_command(self):
-        test_program_path = self.get_full_testfile_name("stdout_stderr.py")
+        test_program_path = get_testfile_name("stdout_stderr.py")
         uut = Linter(test_program_path)(self.EmptyTestLinter)
 
         # The test program puts out the stdin content (only the first line) to
@@ -218,6 +80,12 @@ class LinterTest(unittest.TestCase):
 
     def test_process_output_issues(self):
         pass
+        # TODO
+
+    def test_section_settings_forwarding(self):
+        pass
+        # TODO Use bear.execute() and pass in section values `create_arguments`
+        # TODO is able to take.
 
     def test_grab_output(self):
         uut = Linter("", use_stderr=False)(self.EmptyTestLinter)
@@ -239,12 +107,223 @@ class LinterTest(unittest.TestCase):
         with uut._create_config("filename", []) as config_file:
             self.assertIsNone(config_file)
 
-        uut = Linter("")(self.ConfigurationTestLinter)
+        class ConfigurationTestLinter:
+            @staticmethod
+            def generate_config(filename, file, val):
+                return "config_value = " + str(val)
+
+        uut = Linter("")(ConfigurationTestLinter)
         with uut._create_config("filename", [], val=88) as config_file:
             self.assertTrue(os.path.isfile(config_file))
             with open(config_file, mode="r") as fl:
                 self.assertEqual(fl.read(), "config_value = 88")
         self.assertFalse(os.path.isfile(config_file))
 
-    def test_run(self):
+
+class LinterReallifeTest(unittest.TestCase):
+
+    def setUp(self):
+        self.section = Section("REALLIFE_TEST_SECTION")
+
+        self.test_program_path = get_testfile_name("test_linter.py")
+        self.test_program_regex = (
+            r"L(?P<line>\d+)C(?P<column>\d+)-"
+            r"L(?P<end_line>\d+)C(?P<end_column>\d+):"
+            r" (?P<message>.*) \| (?P<severity>.+) SEVERITY")
+        self.test_program_severity_map = {"MAJOR", RESULT_SEVERITY.MAJOR}
+
+        self.testfile_path = get_testfile_name("test_file.txt")
+        with open(self.testfile_path, mode="r") as fl:
+            self.testfile_content = fl.read()
+
+        self.testfile2_path = get_testfile_name("test_file2.txt")
+        with open(self.testfile2_path, mode="r") as fl:
+            self.testfile2_content = fl.read()
+
+    def test_nostdin_nostderr_noconfig_nocorrection(self):
+        class Handler:
+            @staticmethod
+            def create_arguments(filename, file, config_file):
+                self.assertEqual(filename, self.testfile_path)
+                self.assertEqual(file, self.testfile_content)
+                self.assertIsNone(config_file)
+                return self.test_program_path, filename
+
+        uut = (Linter(sys.executable,
+                      output_regex=self.test_program_regex,
+                      severity_map=self.test_program_severity_map)
+               (Handler)
+               (self.section, None))
+
+        results = list(uut.run(self.testfile_path, self.testfile_content))
+        expected = [Result.from_values(uut,
+                                       "Invalid char ('0')",
+                                       self.testfile_path,
+                                       2,
+                                       0,
+                                       2,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values(uut,
+                                       "Invalid char ('.')",
+                                       self.testfile_path,
+                                       5,
+                                       0,
+                                       5,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values(uut,
+                                       "Invalid char ('p')",
+                                       self.testfile_path,
+                                       9,
+                                       0,
+                                       9,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR)]
+
+        self.assertEqual(results, expected)
+
+    def test_stdin_stderr_noconfig_nocorrection(self):
+        class Handler:
+            @staticmethod
+            def create_arguments(filename, file, config_file):
+                self.assertEqual(filename, self.testfile2_path)
+                self.assertEqual(file, self.testfile2_content)
+                self.assertIsNone(config_file)
+                return (self.test_program_path,
+                        "--use_stderr",
+                        "--use_stdin",
+                        filename)
+
+        uut = (Linter(sys.executable,
+                      use_stdin=True,
+                      use_stderr=True,
+                      output_regex=self.test_program_regex,
+                      severity_map=self.test_program_severity_map)
+               (Handler)
+               (self.section, None))
+
+        results = list(uut.run(self.testfile2_path, self.testfile2_content))
+        expected = [Result.from_values(uut,
+                                       "Invalid char ('X')",
+                                       self.testfile2_path,
+                                       0,
+                                       0,
+                                       0,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values(uut,
+                                       "Invalid char ('i')",
+                                       self.testfile2_path,
+                                       4,
+                                       0,
+                                       4,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR)]
+
+        self.assertEqual(results, expected)
+
+    def test_nostdin_nostderr_noconfig_correction(self):
+        class Handler:
+            @staticmethod
+            def create_arguments(filename, file, config_file):
+                self.assertEqual(filename, self.testfile_path)
+                self.assertEqual(file, self.testfile_content)
+                self.assertIsNone(config_file)
+                return self.test_program_path, "--correct", filename
+
+        uut = (Linter(sys.executable, provides_correction=True)
+               (Handler)
+               (self.section, None))
+
+        results = list(uut.run(self.testfile_path, self.testfile_content))
+        # TODO Adjust results for diff support^^
+        expected = [Result.from_values(uut,
+                                       "Inconsistency found",
+                                       self.testfile_path,
+                                       2,
+                                       0,
+                                       2,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values(uut,
+                                       "Inconsistency found",
+                                       self.testfile_path,
+                                       5,
+                                       0,
+                                       5,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values(uut,
+                                       "Inconsistency found",
+                                       self.testfile_path,
+                                       9,
+                                       0,
+                                       9,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR)]
+
+        self.assertEqual(results, expected)
+
+        # TODO Test non-defaults
+        uut = (Linter(sys.executable,
+                      provides_correction=True,
+                      diff_severity=RESULT_SEVERITY.MINOR,
+                      diff_message="Custom message")
+               (Handler)
+               (self.section, None))
+
+    def test_stdin_stderr_config_nocorrection(self):
+        class Handler:
+            @staticmethod
+            def generate_config(filename, file, some_val):
+                self.assertEqual(filename, self.testfile_path)
+                self.assertEqual(file, self.testfile_content)
+                # some_val shall only test the argument delegation from run().
+                self.assertEqual(some_val, 33)
+
+                return "\n".join(["use_stdin", "use_stderr"])
+
+            @staticmethod
+            def create_arguments(filename, file, config_file, some_val):
+                self.assertEqual(filename, self.testfile_path)
+                self.assertEqual(file, self.testfile_content)
+                self.assertIsNotNone(config_file)
+                self.assertEqual(some_val, 33)
+
+                return self.test_program_path, "--config", config_file
+
+        uut = (Linter(sys.executable, use_stdin=True, use_stderr=True)
+               (Handler)
+               (self.section, None))
+
+        results = list(uut.run(self.testfile_path, self.testfile_content))
+        expected = [Result.from_values(uut,
+                                       "Invalid char ('0')",
+                                       self.testfile_path,
+                                       2,
+                                       0,
+                                       2,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values(uut,
+                                       "Invalid char ('.')",
+                                       self.testfile_path,
+                                       5,
+                                       0,
+                                       5,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values(uut,
+                                       "Invalid char ('p')",
+                                       self.testfile_path,
+                                       9,
+                                       0,
+                                       9,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR)]
+
+        self.assertEqual(results, expected)
+
+    def test_stdin_stderr_config_correction(self):
         pass

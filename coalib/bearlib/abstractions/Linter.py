@@ -30,7 +30,7 @@ def Linter(executable: str,
     ... class XLintBear:
     ...     @staticmethod
     ...     def create_arguments(filename, file, config_file):
-    ...         return ("--lint", filename)
+    ...         return "--lint", filename
 
     Requiring settings is possible like in ``Bear.run()`` with supplying
     additional keyword arguments (and if needed with defaults).
@@ -74,7 +74,7 @@ def Linter(executable: str,
     ...                          config_file,
     ...                          lintmode: str,
     ...                          enable_aggressive_lints: bool=False):
-    ...         return ("--lint", filename, "--config", config_file)
+    ...         return "--lint", filename, "--config", config_file
 
     :param executable:          The linter tool.
     :param provides_correction: Whether the underlying executable provides as
@@ -230,6 +230,11 @@ def Linter(executable: str,
 
             @classmethod
             def get_metadata(cls):
+                # TODO Merge with generate_config? So you could independently
+                # TODO get settings you need there and in
+                # TODO create_arguments the ones needed there. Though arg-
+                # TODO forwarding gets complicated then, but this would be
+                # TODO cool^^
                 return FunctionMetadata.from_function(
                     cls.create_arguments,
                     omit={"filename", "file", "config_file"})
@@ -331,7 +336,7 @@ def Linter(executable: str,
 
                 :param filename: The filename of the file.
                 :param file:     The file contents.
-                :param kwargs:   Section settings passed from ``run()``,
+                :param kwargs:   Section settings passed from ``run()``.
                 :return:         A context-manager handling the config-file.
                 """
                 content = cls.generate_config(filename, file, **kwargs)
@@ -354,7 +359,7 @@ def Linter(executable: str,
                                               **kwargs),
                         stdin=self._pass_file_as_stdin_if_needed(file))
                     output = self._grab_output(stdout, stderr)
-                    self._process_output(output, filename, file)
+                    return self._process_output(output, filename, file)
 
         return Linter
 

@@ -4,24 +4,33 @@
 # lines.
 #
 # Invocation:
-# python3 test_linter.py [--use_stderr] [--correct] file-to-lint
+# python3 test_linter.py [--use_stderr] [--use_stdin] [--correct] file-to-lint
 
 import sys
 
 
-# TODO config_file testing
-
-
 if __name__ == "__main__":
-    if "--use_stderr" in sys.argv:
-        output_file = sys.stderr
+    if "--config" in sys.argv:
+        config_file = sys.argv[sys.argv.index("--config") + 1]
+        with open(config_file, mode="r") as fl:
+            config_content = fl.read().splitlines()
+
+        output_file = (sys.stderr
+                       if "use_stderr" in config_content else
+                       sys.stdout)
+        correct = "correct" in config_content
+        use_stdin = "use_stdin" in config_content
     else:
-        output_file = sys.stdout
+        if "--use_stderr" in sys.argv:
+            output_file = sys.stderr
+        else:
+            output_file = sys.stdout
 
-    correct = "--correct" in sys.argv
+        correct = "--correct" in sys.argv
+        use_stdin = "--use_stdin" in sys.argv
 
-    if "--use_stdin" in sys.argv:
-        content = input()  # TODO Does this also work with multiline input?
+    if use_stdin:
+        content = sys.stdin.read()
     else:
         filename = sys.argv[-1]
         with open(filename, mode="r") as fl:
