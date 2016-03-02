@@ -3,6 +3,8 @@ import re
 import shutil
 from tempfile import NamedTemporaryFile
 
+from coalib.bearlib.abstractions.DefaultLinterInterface import (
+    DefaultLinterInterface)
 from coalib.bears.LocalBear import LocalBear
 from coalib.misc.Decorators import enforce_signature
 from coalib.misc.Shell import run_shell_command
@@ -164,8 +166,21 @@ def Linter(executable: str,
                          repr(superfluous_options.pop()) + " provided.")
 
     def create_linter(cls):
+        # Mixin the given interface into the default interface.
+        class LinterInterface(cls, DefaultLinterInterface):
+            pass
 
-        class Linter(cls, LocalBear):
+        class Linter(LocalBear):
+
+            @staticmethod
+            def get_interface():
+                """
+                Returns the class that contains the interface methods (like
+                ``create_arguments()``) this class uses.
+
+                :return: The interface class.
+                """
+                return LinterInterface
 
             @staticmethod
             def get_executable():
@@ -189,45 +204,6 @@ def Linter(executable: str,
                 else:
                     return True
 
-            @staticmethod
-            def generate_config(filename, file, **kwargs):
-                """
-                Generates the content of a config-file the linter-tool might
-                need.
-
-                The contents generated from this function are written to a
-                temporary file and the path is provided inside
-                ``create_arguments()``.
-
-                By default no configuration is generated.
-
-                :param filename: The name of the file currently processed.
-                :param file:     The contents of the file currently processed.
-                :param kwargs:   Settings provided by ``run()``.
-                :return:         The config-file-contents as a string or
-                                 ``None``.
-                """
-                return None
-
-            @staticmethod
-            def create_arguments(filename, file, config_file):
-                """
-                Creates the arguments for the linter.
-
-                You can provide additional keyword arguments and defaults.
-                These will be interpreted as required settings that need to be
-                provided through a coafile-section.
-
-                :param filename:    The name of the file the linter-tool shall
-                                    process.
-                :param file:        The contents of the file.
-                :param config_file: The path of the config-file if used.
-                                    ``None`` if unused.
-                :return:            A sequence of arguments to feed the
-                                    linter-tool with.
-                """
-                raise NotImplementedError
-
             @classmethod
             def get_metadata(cls):
                 # TODO Merge with generate_config? So you could independently
@@ -236,7 +212,7 @@ def Linter(executable: str,
                 # TODO forwarding gets complicated then, but this would be
                 # TODO cool^^
                 return FunctionMetadata.from_function(
-                    cls.create_arguments,
+                    cls.get_interface().create_arguments,
                     omit={"filename", "file", "config_file"})
 
             @classmethod
@@ -339,7 +315,9 @@ def Linter(executable: str,
                 :param kwargs:   Section settings passed from ``run()``.
                 :return:         A context-manager handling the config-file.
                 """
-                content = cls.generate_config(filename, file, **kwargs)
+                content = cls.get_interface().generate_config(filename,
+                                                              file,
+                                                              **kwargs)
                 if content is None:
                     yield None
                 else:
@@ -353,10 +331,10 @@ def Linter(executable: str,
                                          file,
                                          **kwargs) as config_file:
                     stdout, stderr = self._execute_command(
-                        self.create_arguments(filename,
-                                              file,
-                                              config_file,
-                                              **kwargs),
+                        self.get_interface().create_arguments(filename,
+                                                              file,
+                                                              config_file,
+                                                              **kwargs),
                         stdin=self._pass_file_as_stdin_if_needed(file))
                     output = self._grab_output(stdout, stderr)
                     return self._process_output(output, filename, file)
