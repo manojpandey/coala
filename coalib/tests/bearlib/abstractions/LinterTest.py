@@ -76,7 +76,7 @@ class LinterComponentTest(unittest.TestCase):
 
     def test_process_output_corrected(self):
         # TODO Ahhh I need to instantiate the bear...
-        uut = (Linter("", provides_correction=True)
+        uut = (Linter(sys.executable, provides_correction=True)
                (self.EmptyTestLinter)
                (self.section, None))
 
@@ -89,7 +89,7 @@ class LinterComponentTest(unittest.TestCase):
                  r"(?P<message>.*) \((?P<severity>.*)\) -> "
                  r"ORIGIN=(?P<origin>.*)")
 
-        uut = (Linter("", output_regex=regex)
+        uut = (Linter(sys.executable, output_regex=regex)
                (self.EmptyTestLinter)
                (self.section, None))
         sample_file = "some-file.xtx"
