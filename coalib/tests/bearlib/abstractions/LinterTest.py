@@ -117,7 +117,7 @@ class LinterComponentTest(unittest.TestCase):
                                        77,
                                        1024,
                                        32,
-                                       RESULT_SEVERITY.MINOR)]
+                                       RESULT_SEVERITY.INFO)]
 
         self.assertEqual(results, expected)
 
@@ -310,7 +310,7 @@ class LinterReallifeTest(unittest.TestCase):
         # TODO Test non-defaults
         uut = (Linter(sys.executable,
                       provides_correction=True,
-                      diff_severity=RESULT_SEVERITY.MINOR,
+                      diff_severity=RESULT_SEVERITY.INFO,
                       diff_message="Custom message")
                (Handler)
                (self.section, None))
