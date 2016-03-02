@@ -324,9 +324,9 @@ def Linter(executable: str,
                     # TODO suffix handling, some config files need to have
                     # TODO a specific ending to get recognized.
                     with make_temp() as config_file:
-                        with open(config_file.name, mode="w") as fl:
+                        with open(config_file, mode="w") as fl:
                             fl.write(content)
-                        yield config_file.name
+                        yield config_file
 
             def run(self, filename, file, **kwargs):
                 with self._create_config(filename,
