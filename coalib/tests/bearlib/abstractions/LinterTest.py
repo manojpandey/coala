@@ -94,7 +94,7 @@ class LinterComponentTest(unittest.TestCase):
                (self.section, None))
         sample_file = "some-file.xtx"
         results = list(uut._process_output(test_output, sample_file, [""]))
-        expected = [Result.from_values("X",
+        expected = [Result.from_values("EmptyTestLinter (X)",
                                        "Serious issue",
                                        sample_file,
                                        12,
@@ -102,7 +102,7 @@ class LinterComponentTest(unittest.TestCase):
                                        14,
                                        0,
                                        RESULT_SEVERITY.MAJOR),
-                    Result.from_values("Y",
+                    Result.from_values("EmptyTestLinter (Y)",
                                        "This is a warning",
                                        sample_file,
                                        0,
@@ -110,7 +110,7 @@ class LinterComponentTest(unittest.TestCase):
                                        0,
                                        1,
                                        RESULT_SEVERITY.NORMAL),
-                    Result.from_values("Z",
+                    Result.from_values("EmptyTestLinter (Z)",
                                        "Just a note",
                                        sample_file,
                                        813,

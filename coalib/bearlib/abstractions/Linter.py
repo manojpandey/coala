@@ -178,9 +178,9 @@ def Linter(executable: str,
         raise ValueError("Superfluous keyword argument " +
                          repr(superfluous_options.pop()) + " provided.")
 
-    def create_linter(cls):
+    def create_linter(klass):
         # Mixin the given interface into the default interface.
-        class LinterInterface(cls, DefaultLinterInterface):
+        class LinterInterface(klass, DefaultLinterInterface):
             pass
 
         class Linter(LocalBear):
@@ -264,7 +264,7 @@ def Linter(executable: str,
 
                 if "origin" in groups:
                     groups["origin"] = "{} ({})".format(
-                        str(type(self).__name__),
+                        str(klass.__name__),
                         str(groups["origin"]))
 
                 # TODO self -> cls ? We don't differentiate origin instances
