@@ -76,12 +76,50 @@ class LinterComponentTest(unittest.TestCase):
 
     def test_process_output_corrected(self):
         # TODO Ahhh I need to instantiate the bear...
-        uut_cls = Linter("", provides_correction=True)(self.EmptyTestLinter)
-        uut = uut_cls()
+        uut = (Linter("", provides_correction=True)
+               (self.EmptyTestLinter)
+               (self.section, None))
 
     def test_process_output_issues(self):
-        pass
-        # TODO
+        test_output = ("12:4-14:0-Serious issue (error) -> ORIGIN=X\n"
+                       "0:0-0:1-This is a warning (warning) -> ORIGIN=Y\n"
+                       "813:77-1024:32-Just a note (info) -> ORIGIN=Z\n")
+        regex = (r"(?P<line>\d+):(?P<column>\d+)-"
+                 r"(?P<end_line>\d+):(?P<end_column>\d+)-"
+                 r"(?P<message>.*) \((?P<severity>.*)\) -> "
+                 r"ORIGIN=(?P<origin>.*)")
+
+        uut = (Linter("", output_regex=regex)
+               (self.EmptyTestLinter)
+               (self.section, None))
+        sample_file = "some-file.xtx"
+        results = list(uut._process_output(test_output, sample_file, [""]))
+        expected = [Result.from_values("X",
+                                       "Serious issue",
+                                       sample_file,
+                                       12,
+                                       4,
+                                       14,
+                                       0,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values("Y",
+                                       "This is a warning",
+                                       sample_file,
+                                       0,
+                                       0,
+                                       0,
+                                       1,
+                                       RESULT_SEVERITY.NORMAL),
+                    Result.from_values("Z",
+                                       "Just a note",
+                                       sample_file,
+                                       813,
+                                       77,
+                                       1024,
+                                       32,
+                                       RESULT_SEVERITY.MINOR)]
+
+        self.assertEqual(results, expected)
 
     def test_section_settings_forwarding(self):
         pass
