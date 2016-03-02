@@ -75,7 +75,7 @@ class LinterComponentTest(unittest.TestCase):
         self.assertEqual(stderr, "['some_argument']\n")
 
     def test_process_output_corrected(self):
-        # TODO Ahhh I need to instantiate the bear...
+        # TODO
         uut = (Linter(sys.executable, provides_correction=True)
                (self.EmptyTestLinter)
                (self.section, None))
