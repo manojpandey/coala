@@ -1,11 +1,11 @@
 from contextlib import contextmanager
 import re
 import shutil
-from tempfile import NamedTemporaryFile
 
 from coalib.bearlib.abstractions.DefaultLinterInterface import (
     DefaultLinterInterface)
 from coalib.bears.LocalBear import LocalBear
+from coalib.misc.ContextManagers import make_temp
 from coalib.misc.Decorators import enforce_signature
 from coalib.misc.Shell import run_shell_command
 from coalib.results.Diff import Diff
@@ -321,9 +321,11 @@ def Linter(executable: str,
                 if content is None:
                     yield None
                 else:
-                    with NamedTemporaryFile(mode="w") as config_file:
-                        config_file.write(content)
-                        config_file.close()
+                    # TODO suffix handling, some config files need to have
+                    # TODO a specific ending to get recognized.
+                    with make_temp() as config_file:
+                        with open(config_file.name, mode="w") as fl:
+                            fl.write(content)
                         yield config_file.name
 
             def run(self, filename, file, **kwargs):
