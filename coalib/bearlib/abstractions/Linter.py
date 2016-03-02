@@ -6,7 +6,7 @@ from coalib.bearlib.abstractions.DefaultLinterInterface import (
     DefaultLinterInterface)
 from coalib.bears.LocalBear import LocalBear
 from coalib.misc.ContextManagers import make_temp
-from coalib.misc.Decorators import enforce_signature
+from coalib.misc.Decorators import assert_right_type, enforce_signature
 from coalib.misc.Shell import run_shell_command
 from coalib.results.Diff import Diff
 from coalib.results.Result import Result
@@ -114,6 +114,9 @@ def Linter(executable: str,
                                 ``RESULT_SEVERITY.INFO``.
                                 Only needed if ``provides_correction`` is
                                 ``False``.
+                                A ``ValueError`` is raised when the named group
+                                ``severity`` is not used inside
+                                ``output_regex``.
     :param diff_severity:       The severity to use for all results if
                                 ``provides_correction`` is set. By default this
                                 value is
@@ -138,8 +141,12 @@ def Linter(executable: str,
     if options["provides_correction"]:
         if "diff_severity" not in options:
             options["diff_severity"] = RESULT_SEVERITY.NORMAL
+            # TODO How to check enum type?
+
         if "diff_message" not in options:
             options["diff_message"] = "Inconsistency found."
+        else:
+            assert_right_type(options["diff_message"], (str,), "diff_message")
 
         allowed_options |= {"diff_severity", "diff_message"}
     else:
@@ -149,13 +156,19 @@ def Linter(executable: str,
         options["output_regex"] = re.compile(options["output_regex"])
 
         # Don't setup severity_map if one is provided by user or if it's not
-        # used inside the output_regex.
-        if (
-                "severity" in options["output_regex"].groupindex and
-                "severity_map" not in options):
-            options["severity_map"] = {"error": RESULT_SEVERITY.MAJOR,
-                                       "warning": RESULT_SEVERITY.NORMAL,
-                                       "info": RESULT_SEVERITY.INFO}
+        # used inside the output_regex. If one is manually provided but not
+        # used in the output_regex, throw an exception.
+        # TODO Test that - Mention in docs
+        if "severity_map" in options:
+            if "severity" not in options["output_regex"].groupindex:
+                raise ValueError("Provided `severity_map` but named group "
+                                 "`severity` is not used in `output_regex`.")
+            assert_right_type(options["severity_map"], (dict,), "severity_map")
+        else:
+            if "severity" in options["output_regex"].groupindex:
+                options["severity_map"] = {"error": RESULT_SEVERITY.MAJOR,
+                                           "warning": RESULT_SEVERITY.NORMAL,
+                                           "info": RESULT_SEVERITY.INFO}
 
         allowed_options |= {"output_regex", "severity_map"}
 
