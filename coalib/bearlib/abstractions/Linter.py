@@ -254,7 +254,7 @@ def Linter(executable: str,
                 if (
                         isinstance(options["severity_map"], dict) and
                         "severity" in groups and
-                        groups["severity"] in self.severity_map):
+                        groups["severity"] in options["severity_map"]):
                     groups["severity"] = (
                         options["severity_map"][groups["severity"]])
 
