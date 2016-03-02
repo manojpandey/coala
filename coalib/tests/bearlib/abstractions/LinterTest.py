@@ -134,7 +134,7 @@ class LinterReallifeTest(unittest.TestCase):
             r"L(?P<line>\d+)C(?P<column>\d+)-"
             r"L(?P<end_line>\d+)C(?P<end_column>\d+):"
             r" (?P<message>.*) \| (?P<severity>.+) SEVERITY")
-        self.test_program_severity_map = {"MAJOR", RESULT_SEVERITY.MAJOR}
+        self.test_program_severity_map = {"MAJOR": RESULT_SEVERITY.MAJOR}
 
         self.testfile_path = get_testfile_name("test_file.txt")
         with open(self.testfile_path, mode="r") as fl:
