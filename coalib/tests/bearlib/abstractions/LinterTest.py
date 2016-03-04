@@ -196,9 +196,11 @@ class LinterComponentTest(unittest.TestCase):
             def generate_config(filename, file, val):
                 return "config_value = " + str(val)
 
-        uut = Linter("", output_regex="")(ConfigurationTestLinter)
+        uut = (Linter("", output_regex="", config_suffix=".xml")
+               (ConfigurationTestLinter))
         with uut._create_config("filename", [], val=88) as config_file:
             self.assertTrue(os.path.isfile(config_file))
+            self.assertEqual(config_file[-4:], ".xml")
             with open(config_file, mode="r") as fl:
                 self.assertEqual(fl.read(), "config_value = 88")
         self.assertFalse(os.path.isfile(config_file))
