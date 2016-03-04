@@ -82,7 +82,7 @@ def Linter(executable: str,
     :param provides_correction: Whether the underlying executable provides as
                                 output the entirely corrected file instead of
                                 issue messages.
-    :param use_stdin:           Whether the input file is send via stdin
+    :param use_stdin:           Whether the input file is sent via stdin
                                 instead of passing it over the
                                 command-line-interface.
     :param use_stderr:          Whether stderr instead of stdout should be
@@ -120,11 +120,15 @@ def Linter(executable: str,
     :param diff_severity:       The severity to use for all results if
                                 ``provides_correction`` is set. By default this
                                 value is
-                                ``coalib.results.RESULT_SEVERITY.NORMAL``.
-    :param diff_message:        The message to use for all results if
+                                ``coalib.results.RESULT_SEVERITY.NORMAL``. The
+                                given value needs to be defined inside
+                                ``coalib.results.RESULT_SEVERITY``.
+    :param diff_message:        The message-string to use for all results if
                                 ``provides_correction`` is set. By default this
                                 value is ``"Inconsistency found."``.
     :raises ValueError:         Raised when invalid options are supplied.
+    :raises TypeError:          Raised when incompatible types are supplied.
+                                See parameter documentations for allowed types.
     :return:                    A ``LocalBear`` derivation that lints code
                                 using an external tool.
     """
@@ -141,7 +145,10 @@ def Linter(executable: str,
     if options["provides_correction"]:
         if "diff_severity" not in options:
             options["diff_severity"] = RESULT_SEVERITY.NORMAL
-            # TODO How to check enum type?
+        else:
+            if options["diff_severity"] not in RESULT_SEVERITY.reverse:
+                raise TypeError("Invalid value for `diff_severity`: " +
+                                repr(options["diff_severity"]))
 
         if "diff_message" not in options:
             options["diff_message"] = "Inconsistency found."
@@ -158,7 +165,6 @@ def Linter(executable: str,
         # Don't setup severity_map if one is provided by user or if it's not
         # used inside the output_regex. If one is manually provided but not
         # used in the output_regex, throw an exception.
-        # TODO Test that - Mention in docs
         if "severity_map" in options:
             if "severity" not in options["output_regex"].groupindex:
                 raise ValueError("Provided `severity_map` but named group "
@@ -175,7 +181,7 @@ def Linter(executable: str,
     # Check for illegal superfluous options.
     superfluous_options = options.keys() - allowed_options
     if superfluous_options:
-        raise ValueError("Superfluous keyword argument " +
+        raise ValueError("Invalid keyword argument " +
                          repr(superfluous_options.pop()) + " provided.")
 
     def create_linter(klass):

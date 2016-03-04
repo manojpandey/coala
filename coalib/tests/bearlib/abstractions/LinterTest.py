@@ -28,25 +28,67 @@ class LinterComponentTest(unittest.TestCase):
     def setUp(self):
         self.section = Section("TEST_SECTION")
 
-    def test_decorator_creation(self):
-        with self.assertRaises(ValueError):
-            Linter("some-executable", invalid_arg=88)
+    def test_decorator_invalid_parameters(self):
+        with self.assertRaises(ValueError) as ex:
+            Linter("some-executable", output_regex="", invalid_arg=88)
+        self.assertEqual(str(ex),
+                         "Invalid keyword argument 'invalid_arg' provided.")
 
-        with self.assertRaises(ValueError):
-            Linter("some-executable", diff_severity=RESULT_SEVERITY.MAJOR)
+        with self.assertRaises(ValueError) as ex:
+            Linter("some-executable",
+                   output_regex="",
+                   diff_severity=RESULT_SEVERITY.MAJOR)
+        self.assertEqual(str(ex),
+                         "Invalid keyword argument 'diff_severity' provided.")
 
-        with self.assertRaises(ValueError):
-            Linter("some-executable", diff_message="Custom message")
+        with self.assertRaises(ValueError) as ex:
+            Linter("some-executable",
+                   output_regex="",
+                   diff_message="Custom message")
+        self.assertEqual(str(ex),
+                         "Invalid keyword argument 'diff_message' provided.")
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as ex:
             Linter("some-executable",
                    provides_correction=True,
                    output_regex=".*")
+        self.assertEqual(str(ex),
+                         "Invalid keyword argument 'output_regex' provided.")
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as ex:
             Linter("some-executable",
                    provides_correction=True,
                    severity_map={})
+        self.assertEqual(str(ex),
+                         "Invalid keyword argument 'severity_map' provided.")
+
+    def test_decorator_invalid_states(self):
+        with self.assertRaises(ValueError) as ex:
+            Linter("some-executable")
+        self.assertEqual(str(ex), "No `output_regex` specified.")
+
+        with self.assertRaises(ValueError) as ex:
+            Linter("some-executable", output_regex="", severity_map={})
+        self.assertEqual(
+            str(ex),
+            "Provided `severity_map` but named group `severity` is not used "
+            "in `output_regex`.")
+
+    def test_decorator_invalid_parameter_types(self):
+        with self.assertRaises(TypeError):
+            Linter("some-executable", output_regex="", severity_map=list())
+
+        with self.assertRaises(TypeError):
+            Linter("some-executable",
+                   provides_correction=True,
+                   diff_message=list())
+
+        with self.assertRaises(TypeError) as ex:
+            Linter("some-executable",
+                   provides_correction=True,
+                   diff_severity=999888777)
+        self.assertEqual(str(ex),
+                         "Invalid value for `diff_severity`: 999888777")
 
     def test_get_executable(self):
         uut = Linter("some-executable", output_regex="")(self.EmptyTestLinter)
