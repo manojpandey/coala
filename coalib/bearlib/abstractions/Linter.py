@@ -143,7 +143,7 @@ def Linter(executable: str,
     options["provides_correction"] = provides_correction
     options["use_stdin"] = use_stdin
     options["use_stderr"] = use_stderr
-    options["config_suffix"] = use_stderr
+    options["config_suffix"] = config_suffix
 
     allowed_options = {"executable",
                        "provides_correction",
