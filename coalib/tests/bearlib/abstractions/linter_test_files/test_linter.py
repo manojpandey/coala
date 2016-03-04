@@ -1,11 +1,29 @@
 # This little program tests whether each line begins with one of the primitive
 # math operations ``+``, ``-``, ``*`` and ``/``.
 #
-# When user specifies to actually fix the file, this program removes invalid
-# lines.
+# Invocation
+# ==========
 #
-# Invocation:
-# python3 test_linter.py [--use_stderr] [--use_stdin] [--correct] file-to-lint
+# python3 test_linter.py [--config <config-file>] [--use_stderr] [--use_stdin]
+#                        [--correct] <file-to-lint>
+#
+# Parameters
+# ==========
+#
+# --config      Use a config file located at <config-file>. Other arguments are
+#               ignored when supplying this.
+#               A config file contains in each line a flag that resemble the
+#               command-line-flags that are ignored from the
+#               command-line-interface without the leading "--". So valid
+#               values for each line inside the config are "use_stderr",
+#               "use_stdin" and "correct".
+# --use_stderr  Output to stderr instead of stdout.
+# --use_stdin   Whether to take file <file-to-lint> or grab lint-contents
+#               directly from stdin. Supplying this makes <file-to-lint>
+#               obsolete.
+# --correct     Whether to output the auto-corrected file-content instead of
+#               issue messages. The correction consists of removing invalid
+#               lines.
 
 import sys
 
