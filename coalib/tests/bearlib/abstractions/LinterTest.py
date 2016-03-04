@@ -415,5 +415,55 @@ class LinterReallifeTest(unittest.TestCase):
         self.assertEqual(results, expected)
 
     def test_stdin_stderr_config_correction(self):
+        class Handler:
+            @staticmethod
+            def generate_config(filename, file):
+                self.assertEqual(filename, self.testfile_path)
+                self.assertEqual(file, self.testfile_content)
+
+                return "\n".join(["use_stdin", "use_stderr", "correct"])
+
+            @staticmethod
+            def create_arguments(filename, file, config_file):
+                self.assertEqual(filename, self.testfile_path)
+                self.assertEqual(file, self.testfile_content)
+                self.assertEqual(config_file[-5:], ".conf")
+
+                return self.test_program_path, "--config", config_file
+
+        uut = (Linter(sys.executable,
+                      provides_correction=True,
+                      use_stdin=True,
+                      use_stderr=True,
+                      config_suffix=".conf")
+               (Handler)
+               (self.section, None))
+
+        results = list(uut.run(self.testfile_path, self.testfile_content))
         # TODO
-        pass
+        expected = [Result.from_values(uut,
+                                       "Invalid char ('0')",
+                                       self.testfile_path,
+                                       3,
+                                       0,
+                                       3,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values(uut,
+                                       "Invalid char ('.')",
+                                       self.testfile_path,
+                                       5,
+                                       0,
+                                       5,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR),
+                    Result.from_values(uut,
+                                       "Invalid char ('p')",
+                                       self.testfile_path,
+                                       9,
+                                       0,
+                                       9,
+                                       1,
+                                       RESULT_SEVERITY.MAJOR)]
+
+        self.assertEqual(results, expected)
