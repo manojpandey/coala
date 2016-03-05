@@ -6,6 +6,7 @@ from coalib.bearlib.abstractions.Linter import Linter
 from coalib.results.Diff import Diff
 from coalib.results.Result import Result
 from coalib.results.RESULT_SEVERITY import RESULT_SEVERITY
+from coalib.settings.FunctionMetadata import FunctionMetadata
 from coalib.settings.Section import Section
 
 
@@ -253,7 +254,39 @@ class LinterComponentTest(unittest.TestCase):
 
     def test_merge_metadata(self):
         uut = Linter("", output_regex="")(self.EmptyTestLinter)
-        # TODO
+
+        metadata1 = FunctionMetadata(
+            "main",
+            "Desc of main.\n",
+            "Returns 0 on success",
+            {"argc": ("argc desc", None), "argv": ("argv desc", None)},
+            {"opt": ("opt desc", int, 88)},
+            {"self", "A"})
+
+        metadata2 = FunctionMetadata(
+            "process",
+            "Desc of process.\n",
+            "Returns the processed stuff.",
+            {"argc": ("argc desc from process", int),
+             "to_process": ("to_process desc", int)},
+            {"opt2": ("opt2 desc", str, "hello")},
+            {"self", "B"})
+
+        merged_metadata = uut._merge_metadata(metadata1, metadata2)
+
+        expected = FunctionMetadata(
+            "<Merged signature of 'main' and 'process'>",
+            "main:\nDesc of main.\n\nprocess:\nDesc or process.\n",
+            "main:\nReturns 0 on success\nprocess:\nReturns the processed "
+            "stuff.",
+            {"argc": ("argc desc from process", int),
+             "argv": ("argv desc", None),
+             "to_process": ("to_process desc", int)},
+            {"opt": ("opt desc", int, 88),
+             "opt2": ("opt2 desc", str, "hello")},
+            {"self", "A", "B"})
+
+        self.assertEqual(merged_metadata, expected)
 
 
 class LinterReallifeTest(unittest.TestCase):
