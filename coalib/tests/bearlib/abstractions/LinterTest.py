@@ -345,7 +345,7 @@ class LinterReallifeTest(unittest.TestCase):
                                        3,
                                        1,
                                        RESULT_SEVERITY.INFO,
-                                       diffs=diffs[0]),
+                                       diffs={self.testfile_path: diffs[0]}),
                     Result.from_values(uut,
                                        "Custom message",
                                        self.testfile_path,
@@ -354,7 +354,7 @@ class LinterReallifeTest(unittest.TestCase):
                                        5,
                                        1,
                                        RESULT_SEVERITY.INFO,
-                                       diffs=diffs[1]),
+                                       diffs={self.testfile_path: diffs[1]}),
                     Result.from_values(uut,
                                        "Custom message",
                                        self.testfile_path,
@@ -363,7 +363,7 @@ class LinterReallifeTest(unittest.TestCase):
                                        9,
                                        1,
                                        RESULT_SEVERITY.INFO,
-                                       diffs=diffs[2])]
+                                       diffs={self.testfile_path: diffs[2]})]
 
         self.assertEqual(results, expected)
 
@@ -475,7 +475,7 @@ class LinterReallifeTest(unittest.TestCase):
                                        0,
                                        1,
                                        RESULT_SEVERITY.MAJOR,
-                                       diffs=diffs[0]),
+                                       diffs={self.testfile2_path: diffs[0]}),
                     Result.from_values(uut,
                                        "Inconsistency found",
                                        self.testfile_path,
@@ -484,6 +484,6 @@ class LinterReallifeTest(unittest.TestCase):
                                        4,
                                        1,
                                        RESULT_SEVERITY.MAJOR,
-                                       diffs=diffs[1])]
+                                       diffs={self.testfile2_path: diffs[1]})]
 
         self.assertEqual(results, expected)
