@@ -480,9 +480,9 @@ class LinterReallifeTest(unittest.TestCase):
                     Result.from_values(uut,
                                        "Inconsistency found.",
                                        self.testfile2_path,
-                                       4,
+                                       5,
                                        None,
-                                       4,
+                                       5,
                                        None,
                                        RESULT_SEVERITY.NORMAL,
                                        diffs={self.testfile2_path: diffs[1]})]
