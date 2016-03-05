@@ -186,8 +186,9 @@ class LinterComponentTest(unittest.TestCase):
         self.assertIsNone(uut._pass_file_as_stdin_if_needed(["contents"]))
 
         uut = Linter("", use_stdin=True, output_regex="")(self.EmptyTestLinter)
-        self.assertEqual(uut._pass_file_as_stdin_if_needed(["contents"]),
-                         ["contents"])
+        self.assertEqual(uut._pass_file_as_stdin_if_needed(
+                             ["contents\n", "X"]),
+                         "contents\nX")
 
     def test_generate_config(self):
         uut = Linter("", output_regex="")(self.EmptyTestLinter)
@@ -340,28 +341,28 @@ class LinterReallifeTest(unittest.TestCase):
         expected = [Result.from_values(uut,
                                        "Custom message",
                                        self.testfile_path,
-                                       3,
-                                       0,
-                                       3,
-                                       1,
+                                       4,
+                                       None,
+                                       4,
+                                       None,
                                        RESULT_SEVERITY.INFO,
                                        diffs={self.testfile_path: diffs[0]}),
                     Result.from_values(uut,
                                        "Custom message",
                                        self.testfile_path,
-                                       5,
-                                       0,
-                                       5,
-                                       1,
+                                       6,
+                                       None,
+                                       6,
+                                       None,
                                        RESULT_SEVERITY.INFO,
                                        diffs={self.testfile_path: diffs[1]}),
                     Result.from_values(uut,
                                        "Custom message",
                                        self.testfile_path,
-                                       9,
-                                       0,
-                                       9,
-                                       1,
+                                       10,
+                                       None,
+                                       10,
+                                       None,
                                        RESULT_SEVERITY.INFO,
                                        diffs={self.testfile_path: diffs[2]})]
 
@@ -470,19 +471,19 @@ class LinterReallifeTest(unittest.TestCase):
         expected = [Result.from_values(uut,
                                        "Inconsistency found",
                                        self.testfile2_path,
-                                       0,
-                                       0,
-                                       0,
                                        1,
+                                       None,
+                                       1,
+                                       None,
                                        RESULT_SEVERITY.NORMAL,
                                        diffs={self.testfile2_path: diffs[0]}),
                     Result.from_values(uut,
                                        "Inconsistency found",
                                        self.testfile2_path,
                                        4,
-                                       0,
+                                       None,
                                        4,
-                                       1,
+                                       None,
                                        RESULT_SEVERITY.NORMAL,
                                        diffs={self.testfile2_path: diffs[1]})]
 
