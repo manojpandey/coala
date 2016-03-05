@@ -274,19 +274,28 @@ class LinterComponentTest(unittest.TestCase):
 
         merged_metadata = uut._merge_metadata(metadata1, metadata2)
 
-        expected = FunctionMetadata(
-            "<Merged signature of 'main' and 'process'>",
-            "main:\nDesc of main.\n\nprocess:\nDesc or process.\n",
+        self.assertEqual(
+            merged_metadata.name,
+            "<Merged signature of 'main' and 'process'>")
+        self.assertEqual(
+            merged_metadata.desc,
+            "main:\nDesc of main.\n\nprocess:\nDesc or process.\n")
+        self.assertEqual(
+            merged_metadata.retval_desc,
             "main:\nReturns 0 on success\nprocess:\nReturns the processed "
-            "stuff.",
+            "stuff.")
+        self.assertEqual(
+            merged_metadata.non_optional_params,
             {"argc": ("argc desc from process", int),
              "argv": ("argv desc", None),
-             "to_process": ("to_process desc", int)},
+             "to_process": ("to_process desc", int)})
+        self.assertEqual(
+            merged_metadata.optional_params,
             {"opt": ("opt desc", int, 88),
-             "opt2": ("opt2 desc", str, "hello")},
-            {"self", "A", "B"})
-
-        self.assertEqual(merged_metadata, expected)
+             "opt2": ("opt2 desc", str, "hello")})
+        self.assertEqual(
+            merged_metadata.omit,
+            frozenset({"self", "A", "B"}))
 
 
 class LinterReallifeTest(unittest.TestCase):
