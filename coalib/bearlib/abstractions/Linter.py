@@ -74,10 +74,13 @@ def Linter(executable: str,
     ...     @staticmethod
     ...     def create_arguments(filename,
     ...                          file,
-    ...                          config_file,
-    ...                          lintmode: str,
-    ...                          enable_aggressive_lints: bool=False):
+    ...                          config_file):
     ...         return "--lint", filename, "--config", config_file
+
+    As you can see you don't need to copy additional keyword-arguments you
+    introduced from `create_arguments()` to `generate_config()` and vice-versa.
+    `Linter` takes care of forwarding the right arguments to the right place,
+    so you are able to avoid signature duplication.
 
     :param executable:          The linter tool.
     :param provides_correction: Whether the underlying executable provides as
@@ -233,15 +236,25 @@ def Linter(executable: str,
                     return True
 
             @classmethod
-            def get_metadata(cls):
-                # TODO Merge with generate_config? So you could independently
-                # TODO get settings you need there and in
-                # TODO create_arguments the ones needed there. Though arg-
-                # TODO forwarding gets complicated then, but this would be
-                # TODO cool^^
+            def _get_create_arguments_metadata(cls):
                 return FunctionMetadata.from_function(
                     cls.get_interface().create_arguments,
                     omit={"filename", "file", "config_file"})
+
+            @classmethod
+            def _get_generate_config_metadata(cls):
+                return FunctionMetadata.from_function(
+                    cls.get_interface().generate_config,
+                    omit={"filename", "file"})
+
+            @classmethod
+            def get_non_optional_settings(cls):
+                metadata1 = (
+                    cls._get_create_arguments_metadata().non_optional_params)
+                metadata2 = (
+                    cls._get_generate_config_metadata().non_optional_params)
+                metadata1.update(metadata2)
+                return metadata1
 
             @classmethod
             def _execute_command(cls, args, stdin=None):
@@ -281,9 +294,6 @@ def Linter(executable: str,
                     groups["origin"] = "{} ({})".format(
                         str(klass.__name__),
                         str(groups["origin"]))
-
-                # TODO self -> cls ? We don't differentiate origin instances
-                # TODO and classes in fact...
 
                 # Construct the result.
                 return Result.from_values(
@@ -356,14 +366,30 @@ def Linter(executable: str,
                         yield config_file
 
             def run(self, filename, file, **kwargs):
-                with self._create_config(filename,
-                                         file,
-                                         **kwargs) as config_file:
+                # Get the **kwargs params to forward to `generate_config()`
+                # (from `_create_config()`).
+                generate_config_kwargs = {
+                    key: kwargs[key]
+                    for key in self._get_generate_config_metadata()
+                    .non_optional_params.keys()}
+
+                with self._create_config(
+                        filename,
+                        file,
+                        **generate_config_kwargs) as config_file:
+
+                    # And now retrieve the **kwargs for `create_arguments()`.
+                    create_arguments_kwargs = {
+                        key: kwargs[key]
+                        for key in self._get_create_arguments_metadata()
+                        .non_optional_params.keys()}
+
                     stdout, stderr = self._execute_command(
-                        self.get_interface().create_arguments(filename,
-                                                              file,
-                                                              config_file,
-                                                              **kwargs),
+                        self.get_interface().create_arguments(
+                            filename,
+                            file,
+                            config_file,
+                            **create_arguments_kwargs),
                         stdin=self._pass_file_as_stdin_if_needed(file))
                     output = self._grab_output(stdout, stderr)
                     return self._process_output(output, filename, file)

@@ -167,7 +167,7 @@ class Bear(Printer, LogPrinter):
         :return: A dictionary of needed settings as keys and a tuple of help
                  text and annotation as values
         """
-        return cls.get_settings().non_optional_params
+        return cls.get_metadata().non_optional_params
 
     @classmethod
     def get_settings(cls):

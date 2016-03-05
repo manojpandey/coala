@@ -1,6 +1,6 @@
 class DefaultLinterInterface:
     @staticmethod
-    def generate_config(filename, file, **kwargs):
+    def generate_config(filename, file):
         """
         Generates the content of a config-file the linter-tool might need.
 
@@ -9,9 +9,12 @@ class DefaultLinterInterface:
 
         By default no configuration is generated.
 
+        You can provide additional keyword arguments and defaults. These will
+        be interpreted as required settings that need to be provided through a
+        coafile-section.
+
         :param filename: The name of the file currently processed.
         :param file:     The contents of the file currently processed.
-        :param kwargs:   Settings provided by ``run()``.
         :return:         The config-file-contents as a string or ``None``.
         """
         return None
