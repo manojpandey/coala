@@ -211,8 +211,8 @@ class LinterComponentTest(unittest.TestCase):
                (Handler)
                (self.section, None))
 
-        self.assertEqual(list(uut.execute(filename="some_file.cs", file=[])),
-                         [])
+        self.assertIsNotNone(list(uut.execute(filename="some_file.cs",
+                                              file=[])))
 
     def test_grab_output(self):
         uut = (Linter("", use_stderr=False, output_regex="")
