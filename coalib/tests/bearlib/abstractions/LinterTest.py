@@ -279,7 +279,7 @@ class LinterComponentTest(unittest.TestCase):
             "<Merged signature of 'main' and 'process'>")
         self.assertEqual(
             merged_metadata.desc,
-            "main:\nDesc of main.\n\nprocess:\nDesc or process.\n")
+            "main:\nDesc of main.\n\nprocess:\nDesc of process.\n")
         self.assertEqual(
             merged_metadata.retval_desc,
             "main:\nReturns 0 on success\nprocess:\nReturns the processed "
