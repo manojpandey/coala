@@ -469,7 +469,7 @@ class LinterReallifeTest(unittest.TestCase):
 
         expected = [Result.from_values(uut,
                                        "Inconsistency found",
-                                       self.testfile_path,
+                                       self.testfile2_path,
                                        0,
                                        0,
                                        0,
@@ -478,7 +478,7 @@ class LinterReallifeTest(unittest.TestCase):
                                        diffs={self.testfile2_path: diffs[0]}),
                     Result.from_values(uut,
                                        "Inconsistency found",
-                                       self.testfile_path,
+                                       self.testfile2_path,
                                        4,
                                        0,
                                        4,
