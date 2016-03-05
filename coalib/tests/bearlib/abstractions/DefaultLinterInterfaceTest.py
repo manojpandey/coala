@@ -12,4 +12,4 @@ class DefaultLinterInterfaceTest(unittest.TestCase):
 
     def test_generate_config(self):
         self.assertIsNone(
-            DefaultLinterInterface.generate_config("somefile", [], val=33))
+            DefaultLinterInterface.generate_config("somefile", []))
