@@ -3,6 +3,7 @@ import sys
 import unittest
 
 from coalib.bearlib.abstractions.Linter import Linter
+from coalib.results.Diff import Diff
 from coalib.results.Result import Result
 from coalib.results.RESULT_SEVERITY import RESULT_SEVERITY
 from coalib.settings.Section import Section
@@ -320,46 +321,51 @@ class LinterReallifeTest(unittest.TestCase):
                 self.assertIsNone(config_file)
                 return self.test_program_path, "--correct", filename
 
-        uut = (Linter(sys.executable, provides_correction=True)
-               (Handler)
-               (self.section, None))
-
-        results = list(uut.run(self.testfile_path, self.testfile_content))
-        # TODO Adjust results for diff support^^
-        expected = [Result.from_values(uut,
-                                       "Inconsistency found",
-                                       self.testfile_path,
-                                       3,
-                                       0,
-                                       3,
-                                       1,
-                                       RESULT_SEVERITY.MAJOR),
-                    Result.from_values(uut,
-                                       "Inconsistency found",
-                                       self.testfile_path,
-                                       5,
-                                       0,
-                                       5,
-                                       1,
-                                       RESULT_SEVERITY.MAJOR),
-                    Result.from_values(uut,
-                                       "Inconsistency found",
-                                       self.testfile_path,
-                                       9,
-                                       0,
-                                       9,
-                                       1,
-                                       RESULT_SEVERITY.MAJOR)]
-
-        self.assertEqual(results, expected)
-
-        # TODO Test non-defaults
         uut = (Linter(sys.executable,
                       provides_correction=True,
                       diff_severity=RESULT_SEVERITY.INFO,
                       diff_message="Custom message")
                (Handler)
                (self.section, None))
+
+        results = list(uut.run(self.testfile_path, self.testfile_content))
+
+        expected_correction = ["+", "-", "*", "++", "-", "-", "+"]
+        expected_correction = [s + "\n" for s in expected_correction]
+
+        diffs = list(Diff.from_string_arrays(
+            self.testfile_content.splitlines(keepends=True),
+            expected_correction).split_diff())
+
+        expected = [Result.from_values(uut,
+                                       "Custom message",
+                                       self.testfile_path,
+                                       3,
+                                       0,
+                                       3,
+                                       1,
+                                       RESULT_SEVERITY.INFO,
+                                       diffs=diffs[0]),
+                    Result.from_values(uut,
+                                       "Custom message",
+                                       self.testfile_path,
+                                       5,
+                                       0,
+                                       5,
+                                       1,
+                                       RESULT_SEVERITY.INFO,
+                                       diffs=diffs[1]),
+                    Result.from_values(uut,
+                                       "Custom message",
+                                       self.testfile_path,
+                                       9,
+                                       0,
+                                       9,
+                                       1,
+                                       RESULT_SEVERITY.INFO,
+                                       diffs=diffs[2])]
+
+        self.assertEqual(results, expected)
 
     def test_stdin_stderr_config_nocorrection(self):
         class Handler:
@@ -426,16 +432,16 @@ class LinterReallifeTest(unittest.TestCase):
         class Handler:
             @staticmethod
             def generate_config(filename, file, some_value_A):
-                self.assertEqual(filename, self.testfile_path)
-                self.assertEqual(file, self.testfile_content)
+                self.assertEqual(filename, self.testfile2_path)
+                self.assertEqual(file, self.testfile2_content)
                 self.assertEqual(some_value_A, 124)
 
                 return "\n".join(["use_stdin", "use_stderr", "correct"])
 
             @staticmethod
             def create_arguments(filename, file, config_file, some_value_B):
-                self.assertEqual(filename, self.testfile_path)
-                self.assertEqual(file, self.testfile_content)
+                self.assertEqual(filename, self.testfile2_path)
+                self.assertEqual(file, self.testfile2_content)
                 self.assertEqual(config_file[-5:], ".conf")
                 self.assertEqual(some_value_B, -78)
 
@@ -449,34 +455,35 @@ class LinterReallifeTest(unittest.TestCase):
                (Handler)
                (self.section, None))
 
-        results = list(uut.run(self.testfile_path,
-                               self.testfile_content,
-                               some_value_A = 124,
-                               some_value_B = -78))
-        # TODO
+        results = list(uut.run(self.testfile2_path,
+                               self.testfile2_content,
+                               some_value_A=124,
+                               some_value_B=-78))
+
+        expected_correction = ["+", "/", "/", "-"]
+        expected_correction = [s + "\n" for s in expected_correction]
+
+        diffs = list(Diff.from_string_arrays(
+            self.testfile2_content.splitlines(keepends=True),
+            expected_correction).split_diff())
+
         expected = [Result.from_values(uut,
-                                       "Invalid char ('0')",
+                                       "Inconsistency found",
                                        self.testfile_path,
-                                       3,
                                        0,
-                                       3,
+                                       0,
+                                       0,
                                        1,
-                                       RESULT_SEVERITY.MAJOR),
+                                       RESULT_SEVERITY.MAJOR,
+                                       diffs=diffs[0]),
                     Result.from_values(uut,
-                                       "Invalid char ('.')",
+                                       "Inconsistency found",
                                        self.testfile_path,
-                                       5,
+                                       4,
                                        0,
-                                       5,
+                                       4,
                                        1,
-                                       RESULT_SEVERITY.MAJOR),
-                    Result.from_values(uut,
-                                       "Invalid char ('p')",
-                                       self.testfile_path,
-                                       9,
-                                       0,
-                                       9,
-                                       1,
-                                       RESULT_SEVERITY.MAJOR)]
+                                       RESULT_SEVERITY.MAJOR,
+                                       diffs=diffs[1])]
 
         self.assertEqual(results, expected)
