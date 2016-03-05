@@ -251,6 +251,10 @@ class LinterComponentTest(unittest.TestCase):
                 self.assertEqual(fl.read(), "config_value = 88")
         self.assertFalse(os.path.isfile(config_file))
 
+    def test_merge_metadata(self):
+        uut = Linter("", output_regex="")(self.EmptyTestLinter)
+        # TODO
+
 
 class LinterReallifeTest(unittest.TestCase):
 

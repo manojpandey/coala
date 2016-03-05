@@ -249,12 +249,50 @@ def Linter(executable: str,
 
             @classmethod
             def get_non_optional_settings(cls):
-                metadata1 = (
-                    cls._get_create_arguments_metadata().non_optional_params)
-                metadata2 = (
-                    cls._get_generate_config_metadata().non_optional_params)
-                metadata1.update(metadata2)
-                return metadata1
+                return cls.get_metadata().non_optional_params
+
+            @classmethod
+            def get_metadata(cls):
+                return cls._merge_metadata(
+                    cls._get_create_arguments_metadata(),
+                    cls._get_generate_config_metadata())
+
+            @staticmethod
+            def _merge_metadata(metadata1, metadata2):
+                """
+                Merges signatures of two ``FunctionMetadata`` objects.
+
+                Parameter descriptions (either optional or non-optional) from
+                ``metadata1`` are overridden by ``metadata2``.
+
+                :param metadata1: The first metadata.
+                :param metadata2: The second metadata.
+                :return:          A ``FunctionMetadata`` object containing the
+                                  merged signature of ``metadata1`` and
+                                  ``metadata2``.
+                """
+                merged_optional_params = metadata1.optional_params
+                merged_optional_params.update(metadata2.optional_params)
+                merged_non_optional_params = metadata1.non_optional_params
+                merged_non_optional_params.update(metadata2.non_optional_params)
+
+                return FunctionMetadata(
+                    "<Merged signature of {} and {}>".format(
+                        repr(metadata1.name),
+                        repr(metadata2.name)),
+                    "{}:\n{}\n{}:\n{}".format(
+                        metadata1.name,
+                        metadata1.desc,
+                        metadata2.name,
+                        metadata2.desc),
+                    "{}:\n{}\n{}:\n{}".format(
+                        metadata1.name,
+                        metadata1.retval_desc,
+                        metadata2.name,
+                        metadata2.retval_desc),
+                    merged_non_optional_params,
+                    merged_optional_params,
+                    metadata1.omit | metadata2.omit)
 
             @classmethod
             def _execute_command(cls, args, stdin=None):
