@@ -120,10 +120,29 @@ class LinterComponentTest(unittest.TestCase):
         self.assertEqual(stderr, "['some_argument']\n")
 
     def test_process_output_corrected(self):
-        # TODO
         uut = (Linter(sys.executable, provides_correction=True)
                (self.EmptyTestLinter)
                (self.section, None))
+
+        original = [s + "\n" for s in ["void main()  {", "return 09;", "}"]]
+        fixed = [s + "\n" for s in ["void main()", "{", "return 9;", "}"]]
+
+        results = list(uut._process_output("".join(fixed),
+                                           "some-file.c",
+                                           original))
+
+        diffs = list(Diff.from_string_arrays(original, fixed).split_diff())
+        expected = [Result.from_values(uut,
+                                       "Inconsistency found.",
+                                       "some-file.c",
+                                       1,
+                                       None,
+                                       2,
+                                       None,
+                                       RESULT_SEVERITY.NORMAL,
+                                       diffs={"some-file.c": diffs[0]})]
+
+        self.assertEqual(results, expected)
 
     def test_process_output_issues(self):
         test_output = ("12:4-14:0-Serious issue (error) -> ORIGIN=X\n"
@@ -167,9 +186,25 @@ class LinterComponentTest(unittest.TestCase):
         self.assertEqual(results, expected)
 
     def test_section_settings_forwarding(self):
-        pass
-        # TODO Use bear.execute() and pass in section values `create_arguments`
-        # TODO is able to take.
+        class Handler:
+            @staticmethod
+            def create_arguments(filename, file, config_file, my_param):
+                self.assertEqual(my_param, 109)
+                # Execute python and do nothing.
+                return "-c", "pass"
+
+            @staticmethod
+            def generate_config(filename, file, my_config_param):
+                self.assertEqual(my_config_param, 88)
+
+        self.section["my_param"] = 109
+        self.section["my_config_param"] = 88
+
+        uut = (Linter(sys.executable, output_regex="")
+               (Handler)
+               (self.section, None))
+
+        uut.execute()
 
     def test_grab_output(self):
         uut = (Linter("", use_stderr=False, output_regex="")
