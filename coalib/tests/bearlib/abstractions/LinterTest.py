@@ -417,19 +417,24 @@ class LinterReallifeTest(unittest.TestCase):
         self.assertEqual(results, expected)
 
     def test_stdin_stderr_config_correction(self):
+        # `some_value_A` and `some_value_B` are used to test the different
+        # delegation to `generate_config()` and `create_arguments()`
+        # accordingly.
         class Handler:
             @staticmethod
-            def generate_config(filename, file):
+            def generate_config(filename, file, some_value_A):
                 self.assertEqual(filename, self.testfile_path)
                 self.assertEqual(file, self.testfile_content)
+                self.assertEqual(some_value_A, 124)
 
                 return "\n".join(["use_stdin", "use_stderr", "correct"])
 
             @staticmethod
-            def create_arguments(filename, file, config_file):
+            def create_arguments(filename, file, config_file, some_value_B):
                 self.assertEqual(filename, self.testfile_path)
                 self.assertEqual(file, self.testfile_content)
                 self.assertEqual(config_file[-5:], ".conf")
+                self.assertEqual(some_value_B, -78)
 
                 return self.test_program_path, "--config", config_file
 
@@ -441,7 +446,10 @@ class LinterReallifeTest(unittest.TestCase):
                (Handler)
                (self.section, None))
 
-        results = list(uut.run(self.testfile_path, self.testfile_content))
+        results = list(uut.run(self.testfile_path,
+                               self.testfile_content,
+                               some_value_A = 124,
+                               some_value_B = -78))
         # TODO
         expected = [Result.from_values(uut,
                                        "Invalid char ('0')",
