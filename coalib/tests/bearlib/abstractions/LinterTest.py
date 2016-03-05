@@ -474,7 +474,7 @@ class LinterReallifeTest(unittest.TestCase):
                                        0,
                                        0,
                                        1,
-                                       RESULT_SEVERITY.MAJOR,
+                                       RESULT_SEVERITY.NORMAL,
                                        diffs={self.testfile2_path: diffs[0]}),
                     Result.from_values(uut,
                                        "Inconsistency found",
@@ -483,7 +483,7 @@ class LinterReallifeTest(unittest.TestCase):
                                        0,
                                        4,
                                        1,
-                                       RESULT_SEVERITY.MAJOR,
+                                       RESULT_SEVERITY.NORMAL,
                                        diffs={self.testfile2_path: diffs[1]})]
 
         self.assertEqual(results, expected)
