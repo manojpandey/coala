@@ -335,7 +335,7 @@ def Linter(executable: str,
             if options["use_stdin"]:
                 @staticmethod
                 def _pass_file_as_stdin_if_needed(file):
-                    return file
+                    return "".join(file)
             else:
                 @staticmethod
                 def _pass_file_as_stdin_if_needed(file):

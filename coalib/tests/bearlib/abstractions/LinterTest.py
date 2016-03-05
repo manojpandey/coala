@@ -223,11 +223,11 @@ class LinterReallifeTest(unittest.TestCase):
 
         self.testfile_path = get_testfile_name("test_file.txt")
         with open(self.testfile_path, mode="r") as fl:
-            self.testfile_content = fl.read()
+            self.testfile_content = fl.read().splitlines(keepends=True)
 
         self.testfile2_path = get_testfile_name("test_file2.txt")
         with open(self.testfile2_path, mode="r") as fl:
-            self.testfile2_content = fl.read()
+            self.testfile2_content = fl.read().splitlines(keepends=True)
 
     def test_nostdin_nostderr_noconfig_nocorrection(self):
         class Handler:
@@ -334,7 +334,7 @@ class LinterReallifeTest(unittest.TestCase):
         expected_correction = [s + "\n" for s in expected_correction]
 
         diffs = list(Diff.from_string_arrays(
-            self.testfile_content.splitlines(keepends=True),
+            self.testfile_content,
             expected_correction).split_diff())
 
         expected = [Result.from_values(uut,
@@ -464,7 +464,7 @@ class LinterReallifeTest(unittest.TestCase):
         expected_correction = [s + "\n" for s in expected_correction]
 
         diffs = list(Diff.from_string_arrays(
-            self.testfile2_content.splitlines(keepends=True),
+            self.testfile2_content,
             expected_correction).split_diff())
 
         expected = [Result.from_values(uut,
