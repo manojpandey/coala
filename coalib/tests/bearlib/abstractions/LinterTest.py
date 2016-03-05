@@ -388,7 +388,9 @@ class LinterReallifeTest(unittest.TestCase):
                (Handler)
                (self.section, None))
 
-        results = list(uut.run(self.testfile_path, self.testfile_content))
+        results = list(uut.run(self.testfile_path,
+                               self.testfile_content,
+                               some_val=33))
         expected = [Result.from_values(uut,
                                        "Invalid char ('0')",
                                        self.testfile_path,
