@@ -18,7 +18,7 @@ def get_testfile_name(name):
     """
     return os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         "linter_test_files",
-                         name)
+                        name)
 
 
 class LinterComponentTest(unittest.TestCase):
