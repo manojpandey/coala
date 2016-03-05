@@ -384,7 +384,8 @@ class LinterReallifeTest(unittest.TestCase):
         uut = (Linter(sys.executable,
                       use_stdin=True,
                       use_stderr=True,
-                      output_regex=self.test_program_regex)
+                      output_regex=self.test_program_regex,
+                      severity_map=self.test_program_severity_map)
                (Handler)
                (self.section, None))
 
