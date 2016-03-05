@@ -189,22 +189,29 @@ class LinterComponentTest(unittest.TestCase):
         class Handler:
             @staticmethod
             def create_arguments(filename, file, config_file, my_param):
+                self.assertEqual(filename, "some_file.cs")
+                self.assertEqual(file, [])
+                self.assertIsNone(config_file)
                 self.assertEqual(my_param, 109)
                 # Execute python and do nothing.
                 return "-c", "pass"
 
             @staticmethod
             def generate_config(filename, file, my_config_param):
+                self.assertEqual(filename, "some_file.cs")
+                self.assertEqual(file, [])
                 self.assertEqual(my_config_param, 88)
+                return None
 
-        self.section["my_param"] = 109
-        self.section["my_config_param"] = 88
+        self.section["my_param"] = "109"
+        self.section["my_config_param"] = "88"
 
         uut = (Linter(sys.executable, output_regex="")
                (Handler)
                (self.section, None))
 
-        uut.execute()
+        self.assertEqual(list(uut.execute(filename="some_file.cs", file=[])),
+                         [])
 
     def test_grab_output(self):
         uut = (Linter("", use_stderr=False, output_regex="")
