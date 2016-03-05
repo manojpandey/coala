@@ -317,10 +317,10 @@ def Linter(executable: str,
                 """
                 # Pre process the groups
                 groups = match.groupdict()
-                if (
-                        isinstance(options["severity_map"], dict) and
-                        "severity" in groups and
-                        groups["severity"] in options["severity_map"]):
+
+                if "severity_map" in options:
+                    # `severity_map` is only contained inside `options` when
+                    # it's actually used.
                     groups["severity"] = (
                         options["severity_map"][groups["severity"]])
 

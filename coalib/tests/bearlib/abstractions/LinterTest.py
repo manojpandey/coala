@@ -189,7 +189,7 @@ class LinterComponentTest(unittest.TestCase):
     def test_section_settings_forwarding(self):
         class Handler:
             @staticmethod
-            def create_arguments(filename, file, config_file, my_param):
+            def create_arguments(filename, file, config_file, my_param: int):
                 self.assertEqual(filename, "some_file.cs")
                 self.assertEqual(file, [])
                 self.assertIsNone(config_file)
@@ -198,7 +198,7 @@ class LinterComponentTest(unittest.TestCase):
                 return "-c", "pass"
 
             @staticmethod
-            def generate_config(filename, file, my_config_param):
+            def generate_config(filename, file, my_config_param: int):
                 self.assertEqual(filename, "some_file.cs")
                 self.assertEqual(file, [])
                 self.assertEqual(my_config_param, 88)
