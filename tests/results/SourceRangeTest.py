@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from coalib.results.SourcePosition import SourcePosition
 from coalib.results.SourceRange import SourceRange
+from coalib.misc.Constants import COMPLEX_TEST_STRING
 
 
 class SourceRangeTest(unittest.TestCase):
@@ -69,6 +70,39 @@ class SourceRangeTest(unittest.TestCase):
         uut = SourceRange.from_values("B", start_line=2,
                                       end_line=4).__json__(use_relpath=True)
         self.assertEqual(uut['start'], self.result_fileB_line2)
+
+
+class SourceRangeLineColTest(unittest.TestCase):
+
+    def test_calc_line_col(self):
+        # no newlines
+        text = "find position of 'z'"
+        z_pos = text.find('z')
+        self.assertEqual(SourceRange.calc_line_col(text, z_pos), (1, z_pos+1))
+
+        # newline
+        text = "find position of\n'z'"
+        z_pos = text.find('z')
+        self.assertEqual(SourceRange.calc_line_col(text, z_pos), (2, 2))
+
+        # unicode characters
+        # tests that each character in the COMPLEX_TEST_STRING is treated as
+        # one character and hence would return the correct (line, column)
+        text = COMPLEX_TEST_STRING
+        for char in text:
+            string = char + 'z'
+            z_pos = string.find('z')
+            if char != '\n':
+                self.assertEqual(
+                    SourceRange.calc_line_col(string, z_pos), (1, 2))
+            else:
+                self.assertEqual(
+                    SourceRange.calc_line_col(string, z_pos), (2, 1))
+
+        # raw strings
+        for raw in [r'a\b', r'a\n', 'a\\n']:
+            pos = raw.find(raw[-1])
+            self.assertEqual(SourceRange.calc_line_col(text, pos), (1, 3))
 
 
 class SourceRangeExpandTest(unittest.TestCase):

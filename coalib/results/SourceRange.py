@@ -61,6 +61,33 @@ class SourceRange(TextRange):
     def file(self):
         return self.start.file
 
+    @classmethod
+    def calc_line_col(cls, text, pos_to_find):
+        """
+        Calculate line number and column in the text, from position.
+        Uses \\n as the newline character. Lines and columns start from 1.
+
+        :param text:        A string with all the contents of file.
+        :param pos_to_find: position of character to be found in the
+                            line,column form.
+
+        :return:            a tuple of the form (line, column).
+        """
+        line = 1
+        pos = -1
+        pos_new_line = text.find('\n')
+        while True:
+            if pos_new_line == -1:
+                return (line, pos_to_find - pos)
+
+            if pos_to_find <= pos_new_line:
+                return (line, pos_to_find - pos)
+
+            else:
+                line += 1
+                pos = pos_new_line
+                pos_new_line = text.find('\n', pos_new_line + 1)
+
     def expand(self, file_contents):
         """
         Passes a new SourceRange that covers the same area of a file as this
