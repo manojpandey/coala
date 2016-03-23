@@ -40,6 +40,12 @@ class SourceRangeTest(unittest.TestCase):
         compare = SourceRange.from_values("t.c", 1, 2, 3, 4)
         self.assertEqual(uut, compare)
 
+    def test_from_position(self):
+        text = "12\n\n3  4"
+        uut = SourceRange.from_position("filename", text, 1, 7)
+        compare = SourceRange.from_values("filename", 1, 2, 3, 4)
+        self.assertEqual(uut, compare)
+
     def test_file_property(self):
         uut = SourceRange(self.result_fileA_line2)
         self.assertRegex(uut.file, ".*A")

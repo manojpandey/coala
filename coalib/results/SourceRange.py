@@ -57,6 +57,13 @@ class SourceRange(TextRange):
                                range.end.line,
                                range.end.column)
 
+    @classmethod
+    def from_position(cls, filename, text, start_position, end_position):
+        start_line, start_column = cls.calc_line_col(text, start_position)
+        end_line, end_column = cls.calc_line_col(text, end_position)
+        return cls(SourcePosition(filename, start_line, start_column),
+                   SourcePosition(filename, end_line, end_column))
+
     @property
     def file(self):
         return self.start.file
